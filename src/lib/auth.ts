@@ -6,31 +6,10 @@ import type { Plan } from "@/generated/prisma/client";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
-    {
-      id: "google",
-      name: "Google",
-      type: "oauth",
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        url: "https://accounts.google.com/o/oauth2/v2/auth",
-        params: {
-          scope: "openid email profile",
-          response_type: "code",
-        },
-      },
-      token: "https://oauth2.googleapis.com/token",
-      userinfo: "https://openidconnect.googleapis.com/v1/userinfo",
-      checks: ["state"],
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-        };
-      },
-    },
+    }),
   ],
   session: { strategy: "jwt" },
   pages: {
