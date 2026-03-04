@@ -38,9 +38,17 @@ export async function middleware(request: NextRequest) {
 
   // ── 1. Protect /dashboard/* routes ─────────────────────
   if (pathname.startsWith("/dashboard")) {
+    const isSecure = request.url.startsWith("https://");
+    const cookieName = isSecure
+      ? "__Secure-authjs.session-token"
+      : "authjs.session-token";
+
     const token = await getToken({
       req: request,
       secret: process.env.AUTH_SECRET,
+      secureCookie: isSecure,
+      cookieName,
+      salt: cookieName,
     });
 
     if (!token) {
