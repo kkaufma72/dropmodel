@@ -3,9 +3,17 @@ import { redirect } from "next/navigation";
 import { Chrome } from "lucide-react";
 
 export default async function LoginPage() {
-  const session = await auth();
-  if (session?.user) {
-    redirect("/dashboard");
+  // Wrap auth() in try-catch to prevent redirect loops from corrupted cookies
+  try {
+    const session = await auth();
+    if (session?.user) {
+      redirect("/dashboard");
+    }
+  } catch (e: unknown) {
+    // Re-throw Next.js redirect (it uses a special error internally)
+    if (e && typeof e === "object" && "digest" in e) throw e;
+    // Swallow any other auth errors (corrupted cookies, etc.) — just show login
+    console.error("[login] auth() error (ignored):", e);
   }
 
   return (
