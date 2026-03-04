@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum ProjectStatus {
+  PROCESSING
+  READY
+  ERROR
+}
+
+enum SourceStatus {
+  UPLOADING
+  PROCESSING
+  INDEXED
+  ERROR
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum BotCategory {
+  CUSTOMER_SUPPORT
+  KNOWLEDGE_BASE
+  PRODUCT_DOCS
+  EDUCATION
+  RESEARCH
+  DEVELOPER_TOOLS
+  BUSINESS
+  HEALTH
+  LEGAL
+  FINANCE
+  ENTERTAINMENT
+  OTHER
+}
+
+enum BotVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+enum BotAccessType {
+  FREE
+  PAID
+}
+
+enum SubStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    DateTime?
+  name             String?
+  image            String?
+  plan             Plan      @default(FREE)
+  stripeCustomerId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  accounts         Account[]
+  projects         Project[]
+  publishedBots    PublishedBot[]    @relation("PublishedBots")
+  stars            BotStar[]
+  reviews          BotReview[]
+  forks            BotFork[]
+  botSubscriptions BotSubscription[]
+  creatorProfile   CreatorProfile?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  status        ProjectStatus @default(PROCESSING)
+  modelConfig   Json          @default("{\"temperature\": 0.7, \"systemPrompt\": \"You are a helpful assistant.\", \"maxTokens\": 1024}")
+  customization Json          @default("{\"chatbotColor\": \"#6366f1\", \"welcomeMessage\": \"Hi! How can I help you?\", \"logo\": null}")
+  apiKey        String        @unique @default(uuid())
+  demoToken     String?       @unique
+  queryCount    Int           @default(0)
+  queryLimit    Int           @default(50)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user         User           @relation(fields: [userId], references: [id])
+  dataSources  DataSource[]
+  chatMessages ChatMessage[]
+  usageLogs    UsageLog[]
+  corrections  Correction[]
+  config       ProjectConfig?
+  publishedBot PublishedBot?
+  forkedFrom   BotFork[]      @relation("ForkedFrom")
+
+  @@index([userId])
+  @@index([apiKey])
+}
+
+model DataSource {
+  id           String       @id @default(cuid())
+  projectId    String
+  fileName     String
+  fileType     String
+  fileSize     Int
+  s3Key        String
+  chunkCount   Int          @default(0)
+  status       SourceStatus @default(UPLOADING)
+  errorMessage String?
+  createdAt    DateTime     @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  projectId  String
+  sessionId  String
+  role       MessageRole
+  content    String
+  tokensUsed Int         @default(0)
+  latencyMs  Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([sessionId])
+}
+
+model Correction {
+  id               String   @id @default(cuid())
+  projectId        String
+  originalQuestion String
+  originalAnswer   String
+  correctedAnswer  String
+  vectorId         String? // Pinecone vector ID for this correction
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectConfig {
+  id        String @id @default(cuid())
+  projectId String @unique
+
+  // Questionnaire answers
+  useCase         String // "customer_support" | "knowledge_base" | "product_docs" | "sales" | "other"
+  useCaseCustom   String? // free text if they chose "other"
+  companyName     String? // optional — used to personalize the bot
+  industry        String? // optional — helps the prompt generator understand context
+  tone            String // "professional" | "friendly" | "casual"
+  failureBehavior String // "admit_unknown" | "suggest_contact" | "general_knowledge" | "collect_info"
+  contactInfo     String? // email or URL for fallback (used when failureBehavior = "suggest_contact")
+  collectFields   String[] // array of: "name", "email", "phone", "company" — empty array means none
+  restrictions    String? // free text — topics the bot should never discuss
+  customRules     String? // free text — any additional instructions
+  language        String   @default("en") // primary response language
+  responseLength  String   @default("balanced") // "concise" | "balanced" | "detailed"
+
+  // Generated output
+  generatedPrompt String? // the AI-generated system prompt
+  promptVersion   Int     @default(1) // increments when regenerated
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model UsageLog {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  endpoint  String
+  tokensIn  Int
+  tokensOut Int
+  cost      Float
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+// ─── Marketplace ─────────────────────────────────────────
+
+model PublishedBot {
+  id        String  @id @default(cuid())
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creatorId String
+  creator   User    @relation("PublishedBots", fields: [creatorId], references: [id])
+
+  // Listing details
+  slug             String      @unique
+  displayName      String
+  shortDescription String
+  longDescription  String?
+  category         BotCategory
+  tags             String[]
+  iconUrl          String?
+  coverImageUrl    String?
+
+  // Visibility & access
+  visibility   BotVisibility @default(PRIVATE)
+  accessType   BotAccessType @default(FREE)
+  monthlyPrice Float?
+  trialQueries Int           @default(5)
+
+  // Stats (denormalized for performance)
+  starCount     Int   @default(0)
+  forkCount     Int   @default(0)
+  totalQueries  Int   @default(0)
+  avgRating     Float @default(0)
+  ratingCount   Int   @default(0)
+  weeklyQueries Int   @default(0)
+
+  // Flags
+  featured Boolean @default(false)
+  verified Boolean @default(false)
+
+  publishedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stars         BotStar[]
+  reviews       BotReview[]
+  forks         BotFork[]
+  subscriptions BotSubscription[]
+
+  @@index([category, starCount])
+  @@index([visibility, totalQueries])
+  @@index([visibility, publishedAt])
+  @@index([slug])
+}
+
+model BotStar {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  publishedBotId String
+  publishedBot   PublishedBot @relation(fields: [publishedBotId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, publishedBotId])
+}
+
+model BotReview {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  publishedBotId String
+  publishedBot   PublishedBot @relation(fields: [publishedBotId], references: [id], onDelete: Cascade)
+  rating         Int
+  title          String?
+  body           String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, publishedBotId])
+  @@index([publishedBotId, createdAt])
+}
+
+model BotFork {
+  id                   String       @id @default(cuid())
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id])
+  sourcePublishedBotId String
+  sourceBot            PublishedBot @relation(fields: [sourcePublishedBotId], references: [id])
+  targetProjectId      String
+  targetProject        Project      @relation("ForkedFrom", fields: [targetProjectId], references: [id])
+  createdAt            DateTime     @default(now())
+
+  @@index([sourcePublishedBotId])
+  @@index([userId])
+}
+
+model BotSubscription {
+  id                   String       @id @default(cuid())
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id])
+  publishedBotId       String
+  publishedBot         PublishedBot @relation(fields: [publishedBotId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String?
+  status               SubStatus    @default(ACTIVE)
+  queriesUsed          Int          @default(0)
+  createdAt            DateTime     @default(now())
+  cancelledAt          DateTime?
+
+  @@unique([userId, publishedBotId])
+}
+
+model CreatorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  displayName     String
+  bio             String?
+  avatarUrl       String?
+  websiteUrl      String?
+  twitterHandle   String?
+  githubHandle    String?
+  stripeConnectId String?
+  totalEarnings   Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

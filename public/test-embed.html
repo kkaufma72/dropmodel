@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DropModel Embed Widget Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 800px; margin: 0 auto; padding: 60px 24px; }
+    h1 { font-size: 2rem; margin-bottom: 8px; }
+    p { color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 12px; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
+    .badge { display: inline-block; background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DropModel Widget Test 🧪</h1>
+    <p>This page simulates an external website embedding the DropModel chat widget. Look for the floating chat button in the bottom-right corner.</p>
+
+    <div class="card">
+      <h2>How to test</h2>
+      <ol style="padding-left:20px;line-height:2">
+        <li>Start the dev server: <code>npm run dev</code></li>
+        <li>Create a project in the dashboard and note its <strong>Project ID</strong></li>
+        <li>Replace <code>YOUR_PROJECT_ID</code> in the script tag below</li>
+        <li>Open this page at <code>http://localhost:3000/test-embed.html</code></li>
+        <li>Click the chat bubble and start talking!</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Embed snippet</h2>
+      <pre>&lt;script src="http://localhost:3000/api/v1/embed/YOUR_PROJECT_ID"&gt;&lt;/script&gt;</pre>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <p id="status" style="margin:0">Checking…</p>
+    </div>
+
+    <div class="card">
+      <h2>Sample page content</h2>
+      <p style="margin:0">This is placeholder content representing a customer's website. The chat widget should float above everything without interfering with the page layout or styles.</p>
+    </div>
+  </div>
+
+  <!--
+    ============================================================
+    REPLACE YOUR_PROJECT_ID WITH A REAL PROJECT ID FROM YOUR DB
+    ============================================================
+  -->
+  <script src="http://localhost:3000/api/v1/embed/YOUR_PROJECT_ID"></script>
+
+  <script>
+    // Quick status check
+    window.addEventListener('load', function () {
+      var el = document.getElementById('status');
+      if (window.__dropmodel_loaded) {
+        el.innerHTML = '<span class="badge">✅ Widget loaded successfully</span>';
+      } else {
+        el.innerHTML = '<span class="badge" style="background:#fef2f2;color:#991b1b">❌ Widget not loaded — check the project ID</span>';
+      }
+    });
+  </script>
+</body>
+</html>
