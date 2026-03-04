@@ -6,6 +6,15 @@ export async function GET() {
     // Test raw DB connection
     const userCount = await prisma.user.count();
     
+    // Test NextAuth import
+    let authStatus = 'unknown';
+    try {
+      const { auth } = await import("@/lib/auth");
+      authStatus = auth ? 'loaded' : 'null';
+    } catch (authErr: unknown) {
+      authStatus = `FAILED: ${authErr instanceof Error ? authErr.message : String(authErr)}`;
+    }
+
     // Check env vars (redacted)
     const envCheck = {
       DATABASE_URL: process.env.DATABASE_URL ? 
@@ -20,15 +29,18 @@ export async function GET() {
       status: 'ok',
       dbConnected: true,
       userCount,
+      authStatus,
       env: envCheck,
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack?.split('\n').slice(0, 5) : [];
     return NextResponse.json({
       status: 'error',
       dbConnected: false,
       error: message,
+      stack,
       env: {
         DATABASE_URL: process.env.DATABASE_URL ?
           process.env.DATABASE_URL.replace(/:[^@]+@/, ':***@').substring(0, 80) + '...' : 'MISSING',
