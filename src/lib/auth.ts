@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { Plan } from "@/generated/prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: PrismaAdapter(prisma) as ReturnType<typeof PrismaAdapter>,
   providers: [
     Google({
