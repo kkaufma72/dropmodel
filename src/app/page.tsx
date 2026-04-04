@@ -179,24 +179,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Social Proof ──────────────────────────────── */}
-      <section className="py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <p className="text-center text-lg font-medium text-gray-400">
-            Trusted by teams building with AI
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-8">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex h-10 w-28 items-center justify-center rounded-lg bg-gray-100 text-xs font-medium text-gray-400"
-              >
-                Logo
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── Pricing ───────────────────────────────────── */}
       <section id="pricing" className="scroll-mt-20 py-20">
@@ -272,7 +254,7 @@ export default function LandingPage() {
             Ready to build your AI?
           </h2>
           <p className="mt-4 text-lg text-gray-400">
-            Join thousands of teams using DropModel to deploy AI chatbots.
+            Upload a document and get a chatbot in under a minute.
           </p>
           <Link
             href="/login"
@@ -285,63 +267,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ────────────────────────────────────── */}
-      <footer className="border-t border-gray-200 py-12">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-8 sm:grid-cols-3">
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900">Product</h4>
-              <ul className="mt-4 space-y-2 text-sm text-gray-500">
-                <li>
-                  <a href="#how-it-works" className="transition-colors hover:text-gray-700">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#pricing" className="transition-colors hover:text-gray-700">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="transition-colors hover:text-gray-700">
-                    Docs
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900">Company</h4>
-              <ul className="mt-4 space-y-2 text-sm text-gray-500">
-                <li>
-                  <a href="#" className="transition-colors hover:text-gray-700">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="transition-colors hover:text-gray-700">
-                    Blog
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900">Legal</h4>
-              <ul className="mt-4 space-y-2 text-sm text-gray-500">
-                <li>
-                  <a href="#" className="transition-colors hover:text-gray-700">
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="transition-colors hover:text-gray-700">
-                    Terms
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10 border-t border-gray-200 pt-6 text-center text-sm text-gray-400">
-            &copy; 2025 DropModel. All rights reserved.
+      <footer className="border-t border-gray-200 py-8">
+        <div className="mx-auto max-w-6xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+          <p>&copy; {new Date().getFullYear()} DropModel</p>
+          <div className="flex items-center gap-6">
+            <a href="#how-it-works" className="transition-colors hover:text-gray-700">Features</a>
+            <a href="#pricing" className="transition-colors hover:text-gray-700">Pricing</a>
+            <a href="https://github.com/kkaufma72" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-gray-700">GitHub</a>
           </div>
         </div>
       </footer>
